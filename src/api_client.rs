@@ -117,7 +117,7 @@ pub struct RateLimitedClient {
 impl RateLimitedClient {
     const API_BASE: &'static str = "https://www.nytimes.com/svc/crosswords";
     const PUZZLE_INFO_ENDPOINT: &'static str =
-        "/v3/36569100/puzzles.json?publish_type=midi&date_start={start_date}&date_end={end_date}";
+        "/v3/puzzles.json?publish_type=midi&date_start={start_date}&date_end={end_date}";
     const PUZZLE_STATS_ENDPOINT: &'static str = "/v6/game/{id}.json";
 
     /// Construct a new `RateLimitedClient`
