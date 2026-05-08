@@ -17,7 +17,6 @@ use crate::{logger, PuzzleStats};
 use anyhow::Result;
 use futures::future;
 use log::{debug, error, warn};
-use std::convert::TryInto;
 use tokio::sync::mpsc;
 
 pub async fn fetch_missing_times(
@@ -44,7 +43,7 @@ pub async fn fetch_missing_times(
 ///
 /// * `client` - A `RateLimitedClient` that can be used to send outgoing requests
 /// * `dates` - Blocks of dates to search. Each block must be sorted and contain no more than
-/// `DAY_STEP` elements
+///   `DAY_STEP` elements
 /// * `logger` - Channel where individual puzzle's statistics should be sent to
 pub async fn fetch_ids_and_stats(
     client: RateLimitedClient,
@@ -71,7 +70,7 @@ pub async fn fetch_ids_and_stats(
 ///
 /// * `client` - A `RateLimitedClient` that can be used to send outgoing requests
 /// * `block_of_dates` - Sorted list of puzzle dates to search. Must contain no more than
-/// `DAY_STEP` elements
+///   `DAY_STEP` elements
 /// * `logger` - Channel where individual puzzle's statistics should be sent to
 async fn search_date_block(
     client: RateLimitedClient,

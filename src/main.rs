@@ -12,32 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use chrono::{naive::NaiveDate, Duration};
+use clap::{Args, Parser};
 use core::num::NonZeroU32;
-use crossword::api_client::RateLimitedClient;
+use crossword::api_client::{RateLimitedClient, SubscriptionToken};
 use crossword::database::Database;
 use crossword::{logger, DAY_STEP};
 use indicatif::{ProgressBar, ProgressStyle};
 use log::warn;
-use std::convert::TryInto;
 use std::path::PathBuf;
-use structopt::StructOpt;
 use tokio::sync::mpsc;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 struct Opt {
-    /// NYT subscription token extracted from web browser
-    #[structopt(short = "t", long = "token", env = "NYT_S")]
-    nyt_token: String,
+    #[command(flatten)]
+    subscription_token: NytToken,
 
     /// Earliest puzzle date to pull results from in YYYY-MM-DD format
-    #[structopt(short, long, env = "NYT_XWORD_START")]
+    #[arg(short, long, env = "NYT_XWORD_START")]
     start_date: NaiveDate,
 
     /// Rate-limit (per second) for outgoing requests
-    #[structopt(
-        short = "q",
+    #[arg(
+        short = 'q',
         long = "quota",
         default_value = "5",
         env = "NYT_REQUESTS_PER_SEC"
@@ -50,16 +48,32 @@ struct Opt {
     db_path: PathBuf,
 }
 
+/// NYT subscription token extracted from web browser
+#[derive(Args, Debug)]
+#[group(required = true, multiple = false)]
+struct NytToken {
+    /// NYT subscription token from nyt-s HTTP header
+    #[arg(long, env = "NYT_S_HEADER")]
+    nyt_header: Option<String>,
+    /// NYT subscription token from NYT-S cookie
+    #[arg(long, short = 't', env = "NYT_S_COOKIE")]
+    nyt_cookie: Option<String>,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     pretty_env_logger::init();
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
 
-    let today = chrono::offset::Utc::today().naive_utc();
+    let today = chrono::offset::Utc::now().date_naive();
     let stats_db = if opt.db_path.exists() {
-        Database::from_file(opt.db_path)
-            .expect("Given file exists but does not contain a valid database")
+        Database::from_file(&opt.db_path).with_context(|| {
+            format!(
+                "Given file exists but does not contain a valid database: {}",
+                opt.db_path.display()
+            )
+        })?
     } else {
         Database::new(opt.db_path)
     };
@@ -73,9 +87,9 @@ async fn main() -> Result<()> {
     let cached_unsolved = crossword::get_cached_unsolved_records(&stats_db, opt.start_date);
 
     let total_days = missing_ids.iter().map(Vec::len).sum::<usize>() + cached_unsolved.len();
-    let progress = ProgressBar::new(total_days.try_into().unwrap()).with_style(
+    let progress = ProgressBar::new(total_days.try_into()?).with_style(
         ProgressStyle::default_bar()
-            .template("▕{bar:40}▏{eta} {percent}% {msg}")
+            .template("▕{bar:40}▏{eta} {percent}% {msg}")?
             .progress_chars("⬛🔲⬜"),
     );
 
@@ -88,7 +102,14 @@ async fn main() -> Result<()> {
     let (tx, rx) = mpsc::unbounded_channel();
     let logger_handle = tokio::spawn(logger::task_fn(rx, stats_db, progress));
 
-    let client = RateLimitedClient::new(&opt.nyt_token, opt.request_quota);
+    let token = if let Some(header) = opt.subscription_token.nyt_header {
+        SubscriptionToken::Header(header)
+    } else if let Some(cookie) = opt.subscription_token.nyt_cookie {
+        SubscriptionToken::Cookie(cookie)
+    } else {
+        anyhow::bail!("No NYT subscription token provided");
+    };
+    let client = RateLimitedClient::new(token, opt.request_quota);
 
     let ids_task = tokio::spawn(crossword::search::fetch_ids_and_stats(
         client.clone(),
