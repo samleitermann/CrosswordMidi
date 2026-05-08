@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NYT_S: ${{ secrets.NYT_S }}
-      NYT_XWORD_START: "2021-01-01"
+      NYT_START_DATE: "2021-01-01"
 
     steps:
       - name: Checkout
@@ -38,7 +38,7 @@ jobs:
         run: pip3 install -r plot/requirements.txt
 
       - name: Run scraper
-        run: cargo run --release -- data.csv
+        run: cargo run --release -- -s "${NYT_START_DATE}" data.csv
 
       - name: Generate plot
         run: python3 plot/plot.py data.csv plot.png
