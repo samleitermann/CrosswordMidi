@@ -43,37 +43,79 @@ jobs:
           mkdir -p assets
           python plot/plot.py data.csv assets/crossword-times.png
 
-      - name: Update README with graph
+      - name: Update README with graph and stats
         run: |
           python - <<'PY'
+          import csv
+          import datetime
           from pathlib import Path
 
           readme_path = Path("README.md")
-          graph_markdown = """<!-- crossword-graph:start -->
-          ## NYT Crossword Times
-
-          ![NYT Crossword Times](assets/crossword-times.png)
-
-          _Updated daily by GitHub Actions._
-          <!-- crossword-graph:end -->
-          """
-
           if readme_path.exists():
               readme = readme_path.read_text()
           else:
               readme = "# Crossword\n\n"
 
+          def replace_section(text, start_marker, end_marker, new_content):
+              if start_marker in text and end_marker in text:
+                  before = text.split(start_marker)[0]
+                  after = text.split(end_marker)[1]
+                  return before + start_marker + "\n" + new_content + "\n" + end_marker + after
+              return text
+
+          # Last-run timestamp
+          now_utc = datetime.datetime.now(datetime.timezone.utc)
+          last_run_str = now_utc.strftime("%Y-%m-%d at %H:%M UTC")
+          readme = replace_section(
+              readme,
+              "<!-- last-run:start -->",
+              "<!-- last-run:end -->",
+              f"**Last updated:** {last_run_str}",
+          )
+
+          # Most recent solve from data.csv
+          data_path = Path("data.csv")
+          latest_date = latest_weekday = latest_secs = None
+          if data_path.exists():
+              with open(data_path, newline="") as f:
+                  rows = list(csv.DictReader(f))
+              for row in reversed(rows):
+                  if row.get("solve_time_secs") and row.get("cheated", "true").lower() == "false":
+                      latest_date = row["date"]
+                      latest_weekday = row["weekday"]
+                      latest_secs = int(row["solve_time_secs"])
+                      break
+          if latest_date and latest_secs is not None:
+              mins, secs = divmod(latest_secs, 60)
+              time_str = f"{mins}:{secs:02d}" if mins else f"{secs}s"
+              latest_solve_content = f"**Most recent solve:** {latest_date} ({latest_weekday}) — {time_str}"
+          else:
+              latest_solve_content = "**Most recent solve:** _no data_"
+          readme = replace_section(
+              readme,
+              "<!-- latest-solve:start -->",
+              "<!-- latest-solve:end -->",
+              latest_solve_content,
+          )
+
+          # Graph section
+          graph_markdown = (
+              "<!-- crossword-graph:start -->\n"
+              "## NYT Crossword Times\n\n"
+              "![NYT Crossword Times](assets/crossword-times.png)\n\n"
+              "_Updated daily by GitHub Actions._\n"
+              "<!-- crossword-graph:end -->"
+          )
           start = "<!-- crossword-graph:start -->"
           end = "<!-- crossword-graph:end -->"
-
           if start in readme and end in readme:
               before = readme.split(start)[0]
               after = readme.split(end)[1]
-              new_readme = before + graph_markdown + after
+              readme = before + graph_markdown + after
           else:
-              new_readme = readme.rstrip() + "\n\n" + graph_markdown + "\n"
+              readme = readme.rstrip() + "\n\n" + graph_markdown + "\n"
 
-          readme_path.write_text(new_readme)
+          readme_path.write_text(readme)
           PY
 
       - name: Commit updated files
