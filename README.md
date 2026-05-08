@@ -1,6 +1,6 @@
-# NYT Mini Crossword Stats
+# NYT Midi Crossword Stats
 
-A personal tracker for my [NYT Mini Crossword](https://www.nytimes.com/crosswords/game/mini) solve times.
+A personal tracker for my [NYT Midi Crossword](https://www.nytimes.com/crosswords/game/midi) solve times.
 
 A Rust binary scrapes solve history from the NYT API and writes it to a CSV file. A Python script then reads the CSV and generates a rolling-average trend chart, which is committed back to this repo daily via GitHub Actions.
 
