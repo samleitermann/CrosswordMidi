@@ -88,7 +88,7 @@ async fn main() -> Result<()> {
     let (tx, rx) = mpsc::unbounded_channel();
     let logger_handle = tokio::spawn(logger::task_fn(rx, stats_db, progress));
 
-    let client = RateLimitedClient::new(&opt.nyt_token, opt.request_quota);
+    let client = RateLimitedClient::new(opt.nyt_token.into(), opt.request_quota);
 
     let ids_task = tokio::spawn(crossword::search::fetch_ids_and_stats(
         client.clone(),
