@@ -80,7 +80,7 @@ jobs:
               with open(data_path, newline="") as f:
                   rows = list(csv.DictReader(f))
               for row in reversed(rows):
-                  if row.get("solve_time_secs") and row.get("cheated", "true").lower() == "false":
+                  if row.get("solve_time_secs") and row.get("cheated", "false").lower() == "false":
                       latest_date = row["date"]
                       latest_weekday = row["weekday"]
                       latest_secs = int(row["solve_time_secs"])

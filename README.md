@@ -24,7 +24,7 @@ _Updated daily by GitHub Actions._
 
 1. **Scraper** (`src/`): A Rust binary authenticates with the NYT API using a subscription cookie/header and fetches solve statistics for every puzzle since a configurable start date. Results are cached in `data.csv` so only new or previously-unsolved puzzles need to be re-fetched on subsequent runs.
 
-2. **Plotter** (`plot/plot.py`): A Python script reads `data.csv`, filters out cheated or revisited puzzles, and plots a 26-week rolling average of solve times broken out by day-of-week.
+2. **Plotter** (`plot/plot.py`): A Python script reads `data.csv`, filters out cheated or revisited puzzles, and plots a 26-week rolling average of solve times broken out by day of week.
 
 3. **Automation** (`.github/workflows/main.yml`): A GitHub Actions workflow runs daily at 10:30 UTC. It runs the scraper, regenerates the graph, updates this README, and commits the changes.
 
