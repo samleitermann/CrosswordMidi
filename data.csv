@@ -299,6 +299,8 @@ date,puzzle_id,weekday,solve_time_secs,opened_unix,solved_unix,cheated
 2016-10-24,12420,Mon,,,,false
 2016-10-25,12424,Tue,,,,false
 2016-10-26,12423,Wed,,,,false
+2016-10-27,12422,Thu,,,,false
+2016-10-28,12421,Fri,,,,false
 2016-10-29,12446,Sat,,,,false
 2016-10-30,12447,Sun,,,,false
 2016-10-31,12448,Mon,,,,false
