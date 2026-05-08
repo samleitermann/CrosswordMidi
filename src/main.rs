@@ -15,7 +15,7 @@
 use anyhow::Result;
 use chrono::{naive::NaiveDate, Duration};
 use core::num::NonZeroU32;
-use crossword::api_client::RateLimitedClient;
+use crossword::api_client::{RateLimitedClient, SubscriptionToken};
 use crossword::database::Database;
 use crossword::{logger, DAY_STEP};
 use indicatif::{ProgressBar, ProgressStyle};
@@ -88,7 +88,8 @@ async fn main() -> Result<()> {
     let (tx, rx) = mpsc::unbounded_channel();
     let logger_handle = tokio::spawn(logger::task_fn(rx, stats_db, progress));
 
-    let client = RateLimitedClient::new(&opt.nyt_token, opt.request_quota);
+    let client =
+        RateLimitedClient::new(SubscriptionToken::Cookie(opt.nyt_token), opt.request_quota);
 
     let ids_task = tokio::spawn(crossword::search::fetch_ids_and_stats(
         client.clone(),
