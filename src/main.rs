@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use anyhow::Result;
-use chrono::{naive::NaiveDate, Duration};
+use chrono::{Duration, NaiveDate};
 use core::num::NonZeroU32;
 use crossword::api_client::RateLimitedClient;
 use crossword::database::Database;
