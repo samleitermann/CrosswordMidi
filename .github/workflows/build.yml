@@ -22,9 +22,7 @@ jobs:
           components: clippy, rustfmt
           override: true
     - name: rustfmt
-      uses: mbrobbel/rustfmt-check@0.2.0
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+      run: cargo fmt --all -- --check
     - name: clippy
       uses: actions-rs/clippy-check@v1.0.5
       with:
